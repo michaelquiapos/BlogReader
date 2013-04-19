@@ -91,6 +91,7 @@ public class MainListActivity extends ListActivity {
 					String status = jsonResponse.getString("status");
 					Log.v(TAG, status);
 					
+					// loop through
 					JSONArray jsonPosts = jsonResponse.getJSONArray(responseData);
 					for (int i=0; i < jsonPosts.length(); i++) {
 						JSONObject jsonPost = jsonPosts.getJSONObject(i);

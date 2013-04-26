@@ -22,7 +22,10 @@ import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -34,14 +37,17 @@ public class MainListActivity extends ListActivity {
 	public static final int NUMBER_OF_POSTS	= 20;
 	public static final String TAG = MainListActivity.class.getSimpleName();
 	protected JSONObject mBlogData;
+	protected ProgressBar mProgressBar;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main_list);
 		
+		mProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
+		
 		if(isNetworkAvailable()) {
-		// Alert if network is unavailable
+		mProgressBar.setVisibility(View.VISIBLE);
 		GetBlogPostTask getBlogPostTask = new GetBlogPostTask();
 		getBlogPostTask.execute();
 		
@@ -72,18 +78,16 @@ public class MainListActivity extends ListActivity {
 		return true;
 	}
 		
-	public void updateList() {
+	public void handleBlogResponse() {
+		mProgressBar.setVisibility(View.INVISIBLE);
+		
 		if (mBlogData == null) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setTitle(getString(R.string.error_title));
-			builder.setMessage(getString(R.string.error_message));
-			builder.setPositiveButton(android.R.string.ok, null);
-			AlertDialog dialog = builder.create();
-			dialog.show();
+			
+			updateDisplayForError();
+			
 		}
 		else {
 			try {
-				// Log.d(TAG, mBlogData.toString(2));
 				JSONArray jsonPosts = mBlogData.getJSONArray("posts");
 				mBlogPostTitles = new String[jsonPosts.length()];
 				
@@ -106,16 +110,28 @@ public class MainListActivity extends ListActivity {
 			}
 		}
 	}
+
+	private void updateDisplayForError() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getString(R.string.error_title));
+		builder.setMessage(getString(R.string.error_message));
+		builder.setPositiveButton(android.R.string.ok, null);
+		AlertDialog dialog = builder.create();
+		dialog.show();
+		
+		TextView emptyTextView = (TextView) getListView().getEmptyView();
+		emptyTextView.setText(getString(R.string.no_items));
+	}
 	
 	private class GetBlogPostTask extends AsyncTask<Object, Void, JSONObject> {
-		
-		int responseCode = -1;
-		JSONObject jsonResponse = null;
-		
+				
 		@Override
-		protected JSONObject doInBackground(Object... params) {
+		protected JSONObject doInBackground(Object... arg0) {
+			int responseCode = -1;
+			JSONObject jsonResponse = null;
+			
 			try {
-				URL blogFeedUrl = new URL("http://blog.teamtreehouse.com/api/get_recent_summary/?count=" + NUMBER_OF_POSTS);
+				URL blogFeedUrl = new URL("blog.teamtreehouse.com/api/get_recent_summary/?count=" + NUMBER_OF_POSTS);
 				HttpURLConnection connection = (HttpURLConnection) blogFeedUrl.openConnection();
 				connection.connect();
 				
@@ -151,7 +167,7 @@ public class MainListActivity extends ListActivity {
 		@Override
 		protected void onPostExecute(JSONObject result) {
 			mBlogData = result;
-			updateList();
+			handleBlogResponse();
 		}
 	}
 }

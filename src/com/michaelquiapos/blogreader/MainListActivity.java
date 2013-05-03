@@ -17,15 +17,16 @@ import org.json.JSONObject;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
-import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -34,7 +35,6 @@ import android.widget.Toast;
 
 public class MainListActivity extends ListActivity {
 	
-	// We generally want to use protected for member variables unless we have specific reason to make them public
 	public static final int NUMBER_OF_POSTS	= 20;
 	public static final String TAG = MainListActivity.class.getSimpleName();
 	protected JSONObject mBlogData;
@@ -54,11 +54,32 @@ public class MainListActivity extends ListActivity {
 		if (isNetworkAvailable()) {
 			mProgressBar.setVisibility(View.VISIBLE);
 			
-			// Alert if network is unavailable
 			GetBlogPostTask getBlogPostTask = new GetBlogPostTask();
 			getBlogPostTask.execute();
 		}
-		//Toast.makeText(this, getString(R.String.no_items), Toast.LENGTH_LONG).show();
+	}
+	
+	@Override
+	protected void onListItemClick(ListView l, View v, int position, long id) {
+		super.onListItemClick(l, v, position, id);
+		try {
+			JSONArray jsonPosts = mBlogData.getJSONArray("posts");
+			JSONObject jsonPost = jsonPosts.getJSONObject(position);
+
+			// get string with position as index
+			// for the quiz: String blogUrl = mUrls[position];
+			String blogUrl = jsonPost.getString("url");
+			
+			//Intent to open a blog content, this is known as an Implicit Intent
+			//Intent intent = new Intent(Intent.ACTION_VIEW);
+			//Intent to open a blog content, this is known as an Explicit Intent
+			Intent intent = new Intent(this, BlogWebViewActivity.class);
+			intent.setData(Uri.parse(blogUrl));
+			startActivity(intent);
+		} 
+		catch (JSONException e) {
+			logException(e);
+		}
 	}
 
 	private boolean isNetworkAvailable() {
@@ -76,14 +97,10 @@ public class MainListActivity extends ListActivity {
 		return isAvailable;
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main_list, menu);
-		return true;
+	private void logException(Exception e) {
+		Log.e(TAG, "exception Caught!", e);
 	}
 	
-
 	public void handleBlogResponse() {
 		mProgressBar.setVisibility(View.INVISIBLE);
 		
@@ -115,7 +132,7 @@ public class MainListActivity extends ListActivity {
 						keys, ids);
 				
 				setListAdapter(adapter);
-			} 
+			}
 			catch (JSONException e) {
 				Log.e(TAG, "Exception Caught!", e);
 			}
@@ -169,13 +186,13 @@ public class MainListActivity extends ListActivity {
 				Log.i(TAG, "Code: " + responseCode);
 			}
 			catch (MalformedURLException e) {
-				Log.e(TAG, "Exception caught: ", e);
+				logException(e);
 			} 
 			catch (IOException e){
-				Log.e(TAG, "Exception caught: ", e);
+				logException(e);
 			}
 			catch (Exception e){
-				Log.e(TAG, "Exception caught: ", e);
+				logException(e);
 			}
 			return jsonResponse;
 		}

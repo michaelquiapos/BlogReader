@@ -1,4 +1,4 @@
 BlogReader
 ==========
 
-A blog reader app for Android 4.0.X
+Android 4.0.x blog reader app
